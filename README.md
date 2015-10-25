@@ -14,8 +14,10 @@ This repo removes all such _system dependencies_ to create a standalone **Scala*
 ##Dependencies
 
 Dependencies are included in the distribution itself because they were changed to support the needs.
+
 1. **pdfXtk** : https://github.com/tamirhassan/pdfxtk
-2. **pdf2svg** : https://bitbucket.org/petermr/pdf2svg/wiki/home
+
+2. **pdf2svg** : https://bitbucket.org/petermr/pdf2svg/
      
 ##Test
 1. **Compilation**: This code is provided with the required library in the lib folder. If you want to compile the dependency pdfxtk, go to pdfxtk folder, run `mvn clean install` and copy the jar file `pdfXtk-0.9-SNAPSHOT.jar` to the lib directory.  
