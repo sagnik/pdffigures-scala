@@ -7,9 +7,9 @@ Given a scholarly PDF (optimized for computer science papers), extract the figur
 
 We often include multiple tables/figures/algorithms in scholarly documents. In Latex, we typically use commands to draw lines for tables and include figures as png/eps/svg/PDF files. In MS Word, we draw shapes similarly. When we convert these Latex/ MS Word source files to PDFs, the graphics or text painting operations are converted into PDF operations. Given a PDF, it is hard to **automatically** identify regions that correspond to figures or tables. This can be done manually using InkScape but that isn't scalable.   
 
-A recent project by AllenAI proposed a method to automatically extract these regions from PDFs (https://github.com/allenai/pdffigures). This command line utility (the code is in C++) works very well on scholarly documents especially Computer Science papers. Unfortunately it has some _system dependencies_ such as `poppler`. Also, after identifying the bounding boxes for the figures and tables, they convert the PDF pages into images and crop the region. This method outputs raster graphics, which is not as good as vector graphics.
+A recent project by AllenAI proposed a method to automatically extract these regions from PDFs (https://github.com/allenai/pdffigures). This command line utility (the code is in C++) works very well on scholarly documents especially Computer Science papers. Unfortunately it has some _system dependencies_ such as `poppler`. Also, after identifying the bounding boxes for the figures and tables, they convert the PDF pages into images and crop the regions. Therefore, the output is raster graphics, which is not as good as vector graphics.
   
-This repo removes all such _system dependencies_ to create a standalone **Scala** project where all dependencies are managed through sbt and Maven. Also, we output vector graphics (SVG files).
+This repo removes all such system dependencies to create a standalone **Scala** project where all dependencies are managed through sbt and Maven. Also, we output vector graphics (SVG files).
 
 ##Dependencies
 
