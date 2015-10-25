@@ -13,6 +13,7 @@ src/test/resources/longpdfs
 .settings/
 new/
 .idea*
+verboseresults*
 
 # sbt specific
 .cache/
