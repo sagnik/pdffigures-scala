@@ -1,0 +1,10 @@
+syntax: regexp
+^\.project$
+^\.settings/
+^\.classpath$
+^\.hgignore~$
+unicodeInfo/
+nonUnicodeSymbolInfo/
+Non\-unicode*
+^misc/
+^target/

@@ -1,0 +1,42 @@
+def getCaptions(pdLines: Seq[A], pdParagraphs: Seq[B]): captions = {
+
+      /*
+      val nextLines = pdLines.map(x => (x, findBelow(x, pdLines)))
+      val YDistanceLines = nextLines.map{
+        case (l1,l2)=> {
+          l2 match {
+            case Some(b) => b.boundingBox.y2 - l1.boundingBox.y1
+            case _=>0
+          }
+        }
+      }.filter(a => a > 0).sorted
+
+      val medianYDistanceLines=YDistanceLines(YDistanceLines.length/2)
+      println(s"median distance ${medianYDistanceLines}")
+      //nextLines.foreach{ case(x,y)=>println(s"[original line]: ${x} [next line]: ${y} ")}
+      */
+      val lineMergeThreshold=5f
+      pdLines.
+        filter(p => p.content.trim().startsWith("Fig") || p.content.trim().startsWith("Table"))
+        .flatMap(p => convertToCaption(p, pdParagraphs)).
+        groupBy(p => p.ID).values.
+        map(a => a.toIndexedSeq.sortWith(_.confidence > _.confidence)(0))
+        .toIndexedSeq
+        .map(a => checkForParagraphs(a, pdLines,lineMergeThreshold))
+    }
+
+
+    def findBelow(line:A,lines:Seq[A]):Option[A]={
+        lines.filter(a=>
+          a.pageNumber==line.pageNumber // these lines are in the same page
+            && scala.math.abs(a.boundingBox.x1-line.boundingBox.x1)<1f //solves double column
+            && a!=line // make sure we don't take the line itself
+            && a.boundingBox.y1<line.boundingBox.y2 //"a" is below "line"
+        )
+          .map(a=>(a,line.boundingBox.y2-a.boundingBox.y1))
+          .filter(_._2>0)
+          .sortWith(_._2<_._2)
+          .map{case (a,b)=>a}
+          .headOption
+      }
+

@@ -1,0 +1,12 @@
+{"Type":"Figure",
+"Number": 3,
+"Page": 4,
+"DPI": 100,
+"Width": 850,
+"Height": 1100,
+"CaptionBB": [442,633,775,748],
+"Caption": "Figure 3: Example of a figure and table being directly ad- jacent (left panel, from (Liu, He, and Chang 2010)). In this case the proposed figure regions for each caption will by identical and encompass both the plot and table (right, solid lines). We handle this case by detecting that the region is divided in the middle by a section of whitespace, and then splitting the proposed figure region across that whitespace (dashed line). ",
+"ImageBB": [457,440,762,619],
+"ImageText" : [
+
+]}

@@ -1,0 +1,78 @@
+*~
+*.class
+*.log
+*.swp
+project/
+.idea*
+HERE*
+LOG*
+*.iml
+src/test/resources/longpdfs
+.classpath
+.project
+.settings/
+new/
+.idea*
+
+# sbt specific
+.cache/
+.history/
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+projectFilesBackUp/
+
+#copied from pdf2svg hgignore
+^\.project$
+^\.settings/
+^\.classpath$
+^\.hgignore~$
+unicodeInfo/
+nonUnicodeSymbolInfo/
+Non\-unicode*
+^misc/
+^target/
+
+#copied from pdfxtk gitignore
+
+# ignore all bin directories
+# matches "bin" in any subfolder
+pdfxtk/bin/
+
+# ignore all target directories
+pdfxtk/target/
+
+# ignore all jar directories
+#jar/
+
+pdfxtk/.settings/
+
+.idea/
+# ignore all files ending with ~
+pdfxtk/*~
+
+pdfxtk/pdfxoutput.png
+pdfxtk/output.xml
+pdfxtk/pdfwrap.log
+pdfxtk/.classpath
+pdfxtk/.project
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.idea
+ 

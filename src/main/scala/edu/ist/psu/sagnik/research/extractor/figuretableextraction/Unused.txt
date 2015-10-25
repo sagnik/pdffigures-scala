@@ -1,0 +1,93 @@
+TextBlockClassification
+--------------------------
+
+
+    /*
+    println(s"${Rectangle((bb.x1 + bb.x2) / 3, bb.y1, ((bb.x1 + bb.x2) / 3) +1, bb.y2)}"+tbs.filter(x => rectInterSects(x.boundingBox, Rectangle((bb.x1 + bb.x2) / 3, bb.y1, ((bb.x1 + bb.x2) / 3) +1, bb.y2))).length)
+    println(s"${Rectangle((bb.x1 + bb.x2) / 2, bb.y1, ((bb.x1 + bb.x2) / 2) +1, bb.y2)}"+tbs.filter(x => rectInterSects(x.boundingBox, Rectangle((bb.x1 + bb.x2) / 2, bb.y1, ((bb.x1 + bb.x2) / 2) +1, bb.y2))).length)
+    println(tbs.length)
+    println(s"[number of column for the document]: ${numberOfColumns} , [page bounding box]: $bb")
+    */
+
+    //tbWithColNumbers.foreach(a=>if (a.pageNumber==1) println(s"[bounding box]: ${asCoordinatesStr(a.boundingBox)} [col no]: ${a.columnNo} [page no]: ${a.pageNumber} [content]: ${a.content}"))
+
+ //val captionBBs=Seq.empty[Rectangle]
+
+    //pdGraphics.foreach(a=> if (a.pageNumber==1) println(s"${a.boundingBox} ${asCoordinatesStr(pageBB)}"))
+       //tb.content.length>5 // has considerable number of characters
+
+    captionBBs.foreach(a=> println(s"[pageno] ${a._2} [bb] ${a._1}"))
+
+
+TextBlockClassificationHelper
+-------------------------------
+
+ /*
+      println(s"[text box] ${p.content} intersects with [caption] ${c(0).content}")
+      c.foreach{a => println(s"caption block ${a.content} ${a.boundingBox} ${rectAllSideExtension(a.boundingBox, 5, pageBB)} intersects with extended figure/table box ${p.content}, ${asCoordinatesStr(p.boundingBox)} producing ${rectMerge(tbb, c(0).boundingBox)}")}
+      btbs.filter(a => a.pageNumber==p.pageNumber && rectInterSects(a.boundingBox, rectMerge(tbb, c(0).boundingBox))).foreach(x=> println(s"[intersecting text box]: ${x.content}"))
+      */
+
+
+RegionExtension
+------------------
+
+ /*
+    val pageBBRects=List(
+      Rectangle(pageBB.x1,pageBB.y1,pageBB.x1+1,pageBB.y2), //left page boundary
+      Rectangle(pageBB.x2-1,pageBB.y1,pageBB.x2,pageBB.y2), //right page boundary
+      Rectangle(pageBB.x1,pageBB.y2-1,pageBB.x2,pageBB.y2), //top page boundary
+      Rectangle(pageBB.x1,pageBB.y1,pageBB.x2,pageBB.y1+1)  //bottom page boundary
+    ).toIndexedSeq
+    */
+
+
+
+Region ranking
+-----------------
+
+ //val captionsWithFigTableTbs=
+    /*
+    val regions=captionsWithAdjRegions.foldLeft(Seq.empty[Region])(
+      (accum,b)=>
+        b.adjRegions.left match{case Some(r) => accum:+r case _=>accum}
+    ) ++
+      captionsWithAdjRegions.foldLeft(Seq.empty[Region])(
+        (accum,b)=>
+          b.adjRegions.right match{case Some(r) => accum:+r case _=>accum}
+      )++
+      captionsWithAdjRegions.foldLeft(Seq.empty[Region])(
+        (accum,b)=>
+          b.adjRegions.top match{case Some(r) => accum:+r case _=>accum}
+      )++
+      captionsWithAdjRegions.foldLeft(Seq.empty[Region])(
+        (accum,b)=>
+          b.adjRegions.down match{case Some(r) => accum:+r case _=>accum}
+      ).distinct
+
+    val captionsAndRegions= captionsWithAdjRegions.map(a=>CaptionWithRegions(a.caption, List(a.adjRegions.left,a.adjRegions.right,a.adjRegions.top,a.adjRegions.down).flatten))
+    */
+
+/*
+    val regionMap = regions.groupBy(a=>a._1)
+
+    regionMap.foreach{
+      case (a,b)=> {
+        println(s"[region bounding box]: ${a.bb} [region page number]: ${a.pageNumber} \n-----------------\n")
+        b.foreach(x=> println(s"[caption content]: ${x._2.content} [caption bb]: ${x._2.boundingBox}"))
+        println("\n-----------------\n")
+      }
+    }
+    //captionsWithAdjRegions.map(a=>filterAdjRegions(a,captionsWithAdjRegions))
+    */
+
+
+
+  /*
+  def filterAdjRegions(c:CaptionAdjRegion,cs:Seq[CaptionAdjRegion]):CaptionWithFigTableBB={
+    val regions=List(c.adjRegions.left,c.adjRegions.right,c.adjRegions.top,c.adjRegions.down).flatten
+    if (regions.length==0) CaptionWithFigTableBB(c.caption,Rectangle(10f,10f,30f,30f)) // this shouldn't happen ideally
+    else if (regions.length==1) CaptionWithFigTableBB(c.caption,regions(0)) // we have one region for
+    else
+  }
+  */

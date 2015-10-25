@@ -1,0 +1,12 @@
+{"Type":"Figure",
+"Number": 1,
+"Page": 2,
+"DPI": 100,
+"Width": 850,
+"Height": 1100,
+"CaptionBB": [442,314,775,429],
+"Caption": "Figure 1: A scholarly document (left, page from (Chan and Airoldi 2014)), and the same document with body text masked with filled boxes, captions masked with empty boxes, and tables and figures removed (right). By examining the right image it is easy to guess which regions of the page each caption refers to, even without knowing the text, what the captions say, and anything about the graphical elements on the page. ",
+"ImageBB": [442,73,777,300],
+"ImageText" : [
+
+]}

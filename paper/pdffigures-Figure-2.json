@@ -1,0 +1,12 @@
+{"Type":"Figure",
+"Number": 2,
+"Page": 4,
+"DPI": 100,
+"Width": 850,
+"Height": 1100,
+"CaptionBB": [73,357,775,414],
+"Caption": "Figure 2: Classifying regions within a scholarly document. All text in the document (first panel, page from (Neyshabur and others 2013)) is located and grouped into blocks (second panel). Next the graphical components are isolated and used to determine regions of the page that contain graphics (third panel). To build the final output (fourth panel) these two elements are put together and each text block is classified as body text (filled boxes), image text (box outlines), or caption (box outlines). ",
+"ImageBB": [110,72,740,343],
+"ImageText" : [
+
+]}

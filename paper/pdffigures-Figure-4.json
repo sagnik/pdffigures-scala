@@ -1,0 +1,12 @@
+{"Type":"Figure",
+"Number": 4,
+"Page": 5,
+"DPI": 100,
+"Width": 850,
+"Height": 1100,
+"CaptionBB": [73,315,406,487],
+"Caption": "Figure 4: Disambiguating caption to empty space pairing. From the original document (left panel, page from (Aziz and others 2011)) text regions and caption regions are de- tected (shown as filled and empty boxes in the right panel). At this point it is ambiguous what space to assign to the middle caption, labelled as ‘B’, because considered in isola- tion this caption could plausibly refer to the region above or the region below it. However our algorithm detects that the lower caption, caption C, only has one large, empty region of space nearby that it could refer to. Once it is known that that space has to be assigned to caption C it becomes clear caption B must be referring to the region above it. ",
+"ImageBB": [73,73,409,301],
+"ImageText" : [
+
+]}
