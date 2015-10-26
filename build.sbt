@@ -24,7 +24,6 @@ libraryDependencies ++= Seq(
    //jackson for json
   "org.json4s" %% "json4s-native" % "3.2.11",
   "org.json4s" %% "json4s-jackson" % "3.2.10",
-
   // pdf parsing libraries
   "org.apache.pdfbox"    %  "pdfbox"          %  "1.8.7",
   "org.apache.tika"      %  "tika-bundle"     %  "1.6",
