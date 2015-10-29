@@ -101,6 +101,10 @@ case class CaptionWithRegions(caption:Caption, regions:Seq[Region])
 
 case class CaptionWithFigTableBB(caption:Caption, figTableBB:Region)
 
+case class Figure(figTableBB:Region,words:Seq[PdfWord])
+
+case class FigureCaption(caption:Caption,figure:Figure)
+
 
 
 /******************************************************************************************************/

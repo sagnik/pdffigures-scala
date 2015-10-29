@@ -1,5 +1,6 @@
 package edu.ist.psu.sagnik.research.extractor.figuretableextraction
 
+import java.awt
 import java.io.File
 
 import edu.ist.psu.sagnik.research.extractor.FigureTableExtraction.TextBlockClassification._
@@ -7,7 +8,9 @@ import edu.ist.psu.sagnik.research.extractor.FigureTableExtraction.TextBlockClas
 import edu.ist.psu.sagnik.research.extractor.captionmentionextraction.CaptionMention
 import edu.ist.psu.sagnik.research.extractor.model.Rectangle._
 import edu.ist.psu.sagnik.research.extractor.model._
-import edu.ist.psu.sagnik.research.extractor.writers.{HTMLWriter, SVGWriter}
+import edu.ist.psu.sagnik.research.extractor.writers.{JSONWriter, HTMLWriter, SVGWriter}
+import org.apache.pdfbox.pdmodel.{PDPage, PDDocument}
+import org.apache.pdfbox.util.PDFTextStripperByArea
 
 import org.xmlcml.pdf2svg.PDF2SVGConverter
 
@@ -74,23 +77,26 @@ object FigureTableExtractionSVG {
     val figTableCaptionBBs=RegionRanking(extractedPdf).
 
       map(x=>CaptionWithFigTableBB(
-      x.caption,
-      x.figTableBB.copy(bb = filterRegion(x.figTableBB.bb,
-        classifiedTBs.figTableTbs.filter(y=>y.pageNumber==x.caption.pageNumber),
-        validGraphics.filter(y=>y.pageNumber==x.caption.pageNumber),
-        validRaster.filter(y=>y.pageNumber==x.caption.pageNumber),
-        pageBB
-      )
-      )
-    )
-      ).
-      map(
-        x=>CaptionWithFigTableBB(
-          x.caption.copy(boundingBox = Rectangle(x.caption.boundingBox.x1,pageBB.y2-x.caption.boundingBox.y2,x.caption.boundingBox.x2,pageBB.y2-x.caption.boundingBox.y1)),
-          x.figTableBB.copy(bb = Rectangle(x.figTableBB.bb.x1,pageBB.y2-x.figTableBB.bb.y2,x.figTableBB.bb.x2,pageBB.y2-x.figTableBB.bb.y1))
+        x.caption.copy(content =
+          changeCaptionContent(x.caption.boundingBox,x.caption.pageNumber,pdfloc,pageBB:Rectangle)),
+        x.figTableBB.copy(bb = filterRegion(x.figTableBB.bb,
+          classifiedTBs.figTableTbs.filter(y=>y.pageNumber==x.caption.pageNumber),
+          validGraphics.filter(y=>y.pageNumber==x.caption.pageNumber),
+          validRaster.filter(y=>y.pageNumber==x.caption.pageNumber),
+          pageBB
+        )
         )
       )
-    figTableCaptionBBs.foreach(x=>println(s"[caption content]: ${x.caption.content} [caption bb]: ${x.caption.boundingBox} [figure bb]: ${x.figTableBB.bb}"))
+      ).
+      map( //we are changing the pdfXtk coordinate system to the SVG coordinate system.
+        x=>CaptionWithFigTableBB(
+          x.caption.copy(boundingBox = Rectangle(x.caption.boundingBox.x1,pageBB.y2-x.caption.boundingBox.y2,
+            x.caption.boundingBox.x2,pageBB.y2-x.caption.boundingBox.y1)),
+          x.figTableBB.copy(bb = Rectangle(x.figTableBB.bb.x1,pageBB.y2-x.figTableBB.bb.y2,
+            x.figTableBB.bb.x2,pageBB.y2-x.figTableBB.bb.y1))
+        )
+      )
+    //figTableCaptionBBs.foreach(x=>println(s"[caption content]: ${x.caption.content}"))
 
 
     if (!new File(pdfloc.substring(0,pdfloc.length-4)).exists() || ! new File(pdfloc.substring(0,pdfloc.length-4)).isDirectory)
@@ -131,12 +137,36 @@ object FigureTableExtractionSVG {
       )
     )
 
+    //Using pdfXtk word extraction to produce words from images. TODO: check correctness.
+
+    val figureCaptionWords=svgFiguresCaptions.map(x=>
+      (FigureCaption(caption=x.caption,
+        figure=Figure(figTableBB = x.figTableBB,
+          words=extractedPdf.flatMap(a=>a.pdWords).filter(y=>y.pageNumber==x.figTableBB.pageNumber &&
+            rectInterSects(x.figTableBB.bb,
+              Rectangle(y.boundingBox.x1,pageBB.y2-y.boundingBox.y2,y.boundingBox.x2,pageBB.y2-y.boundingBox.y1)))
+        )
+      )
+        )
+    )
+
+    //figureCaptionWords.foreach(x=> if (x.caption.captionType=="Table") println(s"[table id]: ${x.caption.objectID}, [words]: ${x.figure.words}"))
+
+
+    /***** Writing the results ************/
     svgFiguresCaptions.foreach(x=>SVGWriter(
       x,
       pdfloc.substring(0,pdfloc.length-4)+"/"+pdfloc.split("/").last.substring(0,pdfloc.split("/").last.length-4)+"-"+x.caption.ID+".svg")
     )
 
+    figureCaptionWords.foreach(x=>JSONWriter(
+      x,
+      pdfloc.substring(0,pdfloc.length-4)+"/"+pdfloc.split("/").last.substring(0,pdfloc.split("/").last.length-4)+"-"+x.caption.ID+".json")
+    )
+
+
     HTMLWriter(pdfloc.substring(0,pdfloc.length-4),pdfloc.substring(0,pdfloc.length-4)+"/"+pdfloc.split("/").last.substring(0,pdfloc.split("/").last.length-4)+"-"+"FigureTables.html")
+
   }
 
   /*This is a bit of hack. We want bounding boxes for characters, raster graphics as well as graphics paths. The algorithm to extract these
@@ -193,12 +223,38 @@ object FigureTableExtractionSVG {
     }
 
   def filterRegion(r:Rectangle,ftb:Seq[FigTableTextBlock],vgt:Seq[PdfLine],vr:Seq[PdfRaster],pageBB:Rectangle):Rectangle=
-    //if (List(r.x1>pageBB.x1+5f,r.y1>pageBB.y1+5f,r.x2<pageBB.x2-5f,r.y2<pageBB.y2-5f).filter(x=>x).length>=2)
-    //  r
-    //else
+  //if (List(r.x1>pageBB.x1+5f,r.y1>pageBB.y1+5f,r.x2<pageBB.x2-5f,r.y2<pageBB.y2-5f).filter(x=>x).length>=2)
+  //  r
+  //else
     rectMerge((ftb.map(x => x.boundingBox) ++ vgt.map(x => x.boundingBox) ++ vr.map(x => x.boundingBox)).filter(x => rectInside(x, r))) match {
       case Some(rect) => rectAllSideExtension(rect,3f,pageBB)
       case _ => rectAllSideExtension(r,3f,pageBB)
     }
+
+  /*
+  * For some reason pdfXtk jumbles up all contents in a text block, therefore,
+  * we combine the words extracted from pdfXtk..
+  * TODO: We might consider extracting the "proper" caption using PDFTextStripper.
+  * */
+  def changeCaptionContent(cr:Rectangle,p:Int, words:Seq[PdfWord]):String=
+    words.filter(x => x.pageNumber == p &&
+      rectInterSects(cr, x.boundingBox))
+      .foldLeft("")(
+        (accum, b) => accum + " " + b.content
+      )
+
+  /*
+  * For some reason pdfXtk jumbles up all contents in a text block, therefore,
+  * we extract the "proper" caption using PDFTextStripperbyArea.
+  * */
+  def changeCaptionContent(cr:Rectangle,p:Int, pdfloc:String,pageBB:Rectangle):String={
+    val page=PDDocument.load(pdfloc).getDocumentCatalog.getAllPages.get(p-1).asInstanceOf[PDPage] //TODO: has changed in recent snapshots, also, possible exception
+    val rect=new java.awt.Rectangle(cr.x1-5f,pageBB.y2-cr.y2-5f,cr.x2-cr.x1+10f,cr.y2-cr.y1+10f)
+    val stripper= new PDFTextStripperByArea()
+    stripper.addRegion("cropbox",rect)
+    stripper.setSortByPosition(true)
+    stripper.extractRegions(page);
+    stripper.getTextForRegion("cropbox")
+  }
 
 }

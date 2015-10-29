@@ -31,7 +31,7 @@ We closely follow the approach in the paper pdffigures (project: http://pdffigur
 
 ##TODO
 
-1. The immediate todo is to output the metadata (currently as case classes) as JSON files. This should be done soon.
+1. ~~The immediate todo is to output the metadata (currently as case classes) as JSON files. This should be done soon.~~
 2. Lot's of TODOs are mentioned in the code.
 3. Any suggestions/ feature/ pull requests will be deeply appreciated. 
    
