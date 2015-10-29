@@ -1,6 +1,6 @@
 package edu.ist.psu.sagnik.research.extractor.figuretableextraction
 
-import java.awt
+
 import java.io.File
 
 import edu.ist.psu.sagnik.research.extractor.FigureTableExtraction.TextBlockClassification._
