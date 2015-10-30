@@ -11,7 +11,7 @@ object SVGWriter {
     //println("in svg writer"+loc)
 
     val figBB=fc.figTableBB.bb
-    val svgStrings=fc.svgPaths.map(x=>x.pathContent) //TODO: This has to be modified.
+    val svgStrings=fc.svgPaths.map(x=>x.pathContent)
 
     val svgHeader="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n <svg width=\"" +
       (figBB.x2-figBB.x1).toString +

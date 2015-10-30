@@ -66,6 +66,9 @@ object RegionExtension {
 
   }
 
+  def apply(captions:Seq[Caption], pageBB:Rectangle, classifiedTBs:ClassifiedTextBlocks, validGraphics:Seq[PdfLine],
+            validRaster:Seq[PdfRaster], numberOfColumns:Int):Seq[CaptionAdjRegion]=
+    captions.map(p=>CaptionAdjRegion(p,getAdjacentRegions(p,pageBB,classifiedTBs,validGraphics,validRaster,numberOfColumns)))
 
   def getAdjacentRegions(p:Caption, pageBB:Rectangle, classifiedTBs:ClassifiedTextBlocks, validGraphics:Seq[PdfLine],
                          validRaster:Seq[PdfRaster], numberOfColumns:Int):AdjRegions={

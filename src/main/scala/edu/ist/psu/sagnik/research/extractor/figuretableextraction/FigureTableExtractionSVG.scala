@@ -26,9 +26,6 @@ object FigureTableExtractionSVG {
 
   def apply(extractedPdf: Seq[PdPageObject], pdfloc: String):Unit={
 
-    /*IMPORTANT: This mapping is done because the SVG produced by pdf2svg has the opposite coordinate system of pdfXtk. In pdf2Xtk bottom left corner is the origin,
-    * in pdf2svg top left corner is the origin*/
-
     val pageBB= extractedPdf.flatMap(a=>a.pageBBs).headOption match{
       case Some(pageBB)=>pageBB
       case _ => {Rectangle(0f,0f,595f,842f)} //standard US A4 letter size in points, https://www.gnu.org/software/gv/manual/html_node/Paper-Keywords-and-paper-size-in-points.html
@@ -73,9 +70,9 @@ object FigureTableExtractionSVG {
           rectInterSects(rectAllSideExtension(p.boundingBox,-2,pageBB),rectAllSideExtension(a.boundingBox,-2,pageBB)))
     )
 
-    /********************************************************************************************/
-    val figTableCaptionBBs=RegionRanking(extractedPdf).
+    val captionsWithAdjRegions=RegionExtension(captions, pageBB, classifiedTBs, validGraphics, validRaster,numberOfColumns)
 
+    val figTableCaptionBBs=RegionRanking(captionsWithAdjRegions).
       map(x=>CaptionWithFigTableBB(
         x.caption.copy(content =
           changeCaptionContent(x.caption.boundingBox,x.caption.pageNumber,pdfloc,pageBB:Rectangle)),
@@ -98,6 +95,10 @@ object FigureTableExtractionSVG {
       )
     //figTableCaptionBBs.foreach(x=>println(s"[caption content]: ${x.caption.content}"))
 
+    /*TODO: The following part (within **) is taking a long time, need a faster way*/
+
+    /***********************************************************************************/
+    //println(s"not done ${scala.compat.Platform.currentTime}")
 
     if (!new File(pdfloc.substring(0,pdfloc.length-4)).exists() || ! new File(pdfloc.substring(0,pdfloc.length-4)).isDirectory)
       new File(pdfloc.substring(0, pdfloc.length - 4)).mkdir()
@@ -115,20 +116,30 @@ object FigureTableExtractionSVG {
       )
     }
 
-    /*TODO: This is taking a long time, need a faster way*/
     val svgFiles=DataLocation(new File(pdfloc.substring(0,pdfloc.length-4)),"page\\d+.svg"r).map(x=>x.getAbsolutePath)
+    val figPages=figTableCaptionBBs.map(x=>x.caption.pageNumber)
+
+
+
     val pathsAllPage= svgFiles
       .flatMap(
         a=>{
-          io.Source.fromFile(a).mkString.split("\n").drop(5).dropRight(1).map(x=>x.trim).filter(x=>x.startsWith("<path") || x.startsWith("<text") || x.startsWith("<image")).toIndexedSeq
-            .map(
-              x=> VectorGraphicsPathString(x,
-                getPathBoundingBox(x),
-                a.substring(0,a.length-4).split("-").last.replace("page","").toInt //TODO: possible exception, should be handled
+          val pageNo=a.substring(0,a.length-4).split("-").last.replace("page","").toInt //TODO: possible exception, should be handled
+          if (figPages.exists(pn=>pn==pageNo)) {
+            io.Source.fromFile(a).mkString.split("\n").drop(5).dropRight(1).map(x => x.trim)//.filter(x => x.startsWith("<path") || x.startsWith("<text") || x.startsWith("<image")).toIndexedSeq
+              .map(
+                x => Some(VectorGraphicsPathString(x,
+                  getPathBoundingBox(x),
+                  pageNo
+                ))
               )
-            )
+          }
+          else None
         }
-      ).toIndexedSeq
+      ).toIndexedSeq.flatten
+
+    //println(s"done ${scala.compat.Platform.currentTime}")
+    /***********************************************************************************/
 
     //pathsAllPage.foreach(a=> if (a.pageNumber==12 && a.pathContent.startsWith("<image")) println(a.pathContent))
     val svgFiguresCaptions=figTableCaptionBBs.map(x=>

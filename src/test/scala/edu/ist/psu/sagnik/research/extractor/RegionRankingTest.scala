@@ -17,7 +17,7 @@ class RegionRankingTest extends FunSpec {
     it("should print the page number and bounding box etc.") {
 
       val extractedPdf=PdfXtkModule.Load(pdfloc).map(PdfxTkExtractor)
-      val results=RegionRanking(extractedPdf)
+      val results=RegionRanking(extractedPdf,true)
       results.foreach(a=>println(s"[caption content]: ${a.caption.content} [page number]: ${a.caption.pageNumber} " +
         s"[regionbb]: ${a.figTableBB.bb} [region page number]: ${a.figTableBB.pageNumber}"))
 

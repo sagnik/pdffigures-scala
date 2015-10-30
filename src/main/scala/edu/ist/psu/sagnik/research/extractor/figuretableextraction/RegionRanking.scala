@@ -8,14 +8,19 @@ import edu.ist.psu.sagnik.research.extractor.model._
  */
 object RegionRanking {
 
-  def apply(extractedPdf: Seq[PdPageObject]):Seq[CaptionWithFigTableBB]={
+  //TODO: the extra parameter is for type erasure, I have to check for a better method sometime soon.
+  def apply(extractedPdf: Seq[PdPageObject],isPDPages:Boolean): Seq[CaptionWithFigTableBB] ={
+    apply(RegionExtension(extractedPdf).map(a=>CaptionAdjRegion(a.caption,a.adjRegions.copy(left=None,right=None))))
+  }
+
+  def apply(cWars: Seq[CaptionAdjRegion]):Seq[CaptionWithFigTableBB]={
     /* TODO:
         As mentioned before, our assumption is that the captions are either above or below the figure, not to the left
        or right (because we are extending caption bounding boxes to column boundaries). This ensures we can have at most two regions for a caption.
        We kept four regions so far because in future figures to the left or right of the caption can be considered. But here we will discard left or right regions.
 
      */
-    val cWas=RegionExtension(extractedPdf).map(a=>CaptionAdjRegion(a.caption,a.adjRegions.copy(left=None,right=None)))
+    val cWas=cWars.map(a=>CaptionAdjRegion(a.caption,a.adjRegions.copy(left=None,right=None)))
     val regionCaption=cWas.foldLeft(Seq.empty[(Region,Caption)])(
       (accum,b)=>
         b.adjRegions.top match{case Some(r) => accum:+(r,b.caption) case _=>accum}

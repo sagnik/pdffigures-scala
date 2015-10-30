@@ -46,9 +46,9 @@ libraryDependencies += "commons-collections" % "commons-collections" % "3.2.1"
 //libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.1.4"
 // for iterator
 
-javacOptions ++= Seq("-source", "1.6", "-target", "1.6")
+javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 
-//scalacOptions += "-target:jvm-1.6"
+//scalacOptions += "-target:jvm-1.8"
 
 fork := true
 
