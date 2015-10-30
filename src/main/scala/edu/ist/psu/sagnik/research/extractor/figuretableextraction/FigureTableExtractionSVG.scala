@@ -9,8 +9,7 @@ import edu.ist.psu.sagnik.research.extractor.captionmentionextraction.CaptionMen
 import edu.ist.psu.sagnik.research.extractor.model.Rectangle._
 import edu.ist.psu.sagnik.research.extractor.model._
 import edu.ist.psu.sagnik.research.extractor.writers.{JSONWriter, HTMLWriter, SVGWriter}
-import org.apache.pdfbox.pdmodel.{PDPage, PDDocument}
-import org.apache.pdfbox.util.PDFTextStripperByArea
+import edu.ist.psu.sagnik.research.extractor.impl.PdfBoxExtractor._
 
 import org.xmlcml.pdf2svg.PDF2SVGConverter
 
@@ -31,18 +30,17 @@ object FigureTableExtractionSVG {
       case _ => {Rectangle(0f,0f,595f,842f)} //standard US A4 letter size in points, https://www.gnu.org/software/gv/manual/html_node/Paper-Keywords-and-paper-size-in-points.html
     }
 
-    //TODO: need to do a bit of code restructuring her, the portion between /** and **/ is repeated code
-    /*************************************************************************************************/
     val pdTextLines= extractedPdf.flatMap(p=>p.pdTextLines)
     val pdPargaraphs= extractedPdf.flatMap(p=>p.pdParagraphs)
     val pdGraphics = extractedPdf.flatMap(p=>p.pdLines)
     val pdImages= extractedPdf.flatMap(p=>p.pdImages)
+    val pdChars=extractedPdf.flatMap(p=>p.pdChars)
 
     val tbs=getTbs(pdPargaraphs,pdTextLines)
     val bb=pageBB
     val numberOfColumns= {
-      if (tbs.filter(x => rectInterSects(x.boundingBox, Rectangle((bb.x1 + bb.x2) / 3, bb.y1, ((bb.x1 + bb.x2) / 3) +1, bb.y2))).length<0.1*tbs.length) 3
-      else if (tbs.filter(x => rectInterSects(x.boundingBox, Rectangle((bb.x1 + bb.x2) / 2, bb.y1, ((bb.x1 + bb.x2) / 2) +1, bb.y2))).length<0.1*tbs.length) 2
+      if (tbs.count(x => rectInterSects(x.boundingBox, Rectangle((bb.x1 + bb.x2) / 3, bb.y1, ((bb.x1 + bb.x2) / 3) +1, bb.y2)))<0.1*tbs.length) 3
+      else if (tbs.count(x => rectInterSects(x.boundingBox, Rectangle((bb.x1 + bb.x2) / 2, bb.y1, ((bb.x1 + bb.x2) / 2) +1, bb.y2)))<0.1*tbs.length) 2
       else 1
     }
 
@@ -75,7 +73,7 @@ object FigureTableExtractionSVG {
     val figTableCaptionBBs=RegionRanking(captionsWithAdjRegions).
       map(x=>CaptionWithFigTableBB(
         x.caption.copy(content =
-          changeCaptionContent(x.caption.boundingBox,x.caption.pageNumber,pdfloc,pageBB:Rectangle)),
+          changeRectContent(x.caption.content,x.caption.boundingBox,x.caption.pageNumber,pdfloc,pageBB:Rectangle,true,true)),
         x.figTableBB.copy(bb = filterRegion(x.figTableBB.bb,
           classifiedTBs.figTableTbs.filter(y=>y.pageNumber==x.caption.pageNumber),
           validGraphics.filter(y=>y.pageNumber==x.caption.pageNumber),
@@ -149,16 +147,28 @@ object FigureTableExtractionSVG {
     )
 
     //Using pdfXtk word extraction to produce words from images. TODO: check correctness.
+    import edu.ist.psu.sagnik.research.extractor.impl.PdfxTkExtractor.textLineContentToWord
 
+    //TODO: Getting text "words" from vector graphics is proving to be hard than I imagined. Have to revisit.
     val figureCaptionWords=svgFiguresCaptions.map(x=>
-      (FigureCaption(caption=x.caption,
+      FigureCaption(caption=x.caption,
         figure=Figure(figTableBB = x.figTableBB,
-          words=extractedPdf.flatMap(a=>a.pdWords).filter(y=>y.pageNumber==x.figTableBB.pageNumber &&
-            rectInterSects(x.figTableBB.bb,
-              Rectangle(y.boundingBox.x1,pageBB.y2-y.boundingBox.y2,y.boundingBox.x2,pageBB.y2-y.boundingBox.y1)))
+          words=
+          /*********************************************************************/
+            pdTextLines.filter(a => a.pageNumber == x.figTableBB.pageNumber &&
+              rectInside(
+                Rectangle(a.boundingBox.x1, pageBB.y2 - a.boundingBox.y2, a.boundingBox.x2, pageBB.y2 - a.boundingBox.y1),
+                rectAllSideExtension(x.figTableBB.bb,5f,pageBB)))
+            .flatMap(tl=>
+              textLineContentToWord(
+                changeRectContent(tl.content,tl.boundingBox,tl.pageNumber,pdfloc,pageBB,true,false),
+                 pdChars.filter(c=>c.pageNumber==tl.pageNumber && rectInterSects(c.boundingBox,tl.boundingBox)),
+                  tl.pageNumber
+            )
+            )
+        /*******************************************************************/
         )
       )
-        )
     )
 
     //figureCaptionWords.foreach(x=> if (x.caption.captionType=="Table") println(s"[table id]: ${x.caption.objectID}, [words]: ${x.figure.words}"))
@@ -254,18 +264,6 @@ object FigureTableExtractionSVG {
         (accum, b) => accum + " " + b.content
       )
 
-  /*
-  * For some reason pdfXtk jumbles up all contents in a text block, therefore,
-  * we extract the "proper" caption using PDFTextStripperbyArea.
-  * */
-  def changeCaptionContent(cr:Rectangle,p:Int, pdfloc:String,pageBB:Rectangle):String={
-    val page=PDDocument.load(pdfloc).getDocumentCatalog.getAllPages.get(p-1).asInstanceOf[PDPage] //TODO: has changed in recent snapshots, also, possible exception
-    val rect=new java.awt.Rectangle(cr.x1-5f,pageBB.y2-cr.y2-5f,cr.x2-cr.x1+10f,cr.y2-cr.y1+10f)
-    val stripper= new PDFTextStripperByArea()
-    stripper.addRegion("cropbox",rect)
-    stripper.setSortByPosition(true)
-    stripper.extractRegions(page);
-    stripper.getTextForRegion("cropbox")
-  }
+
 
 }

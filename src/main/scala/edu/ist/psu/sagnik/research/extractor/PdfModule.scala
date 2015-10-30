@@ -23,7 +23,7 @@ trait PdfModule[A] {
   type Object = PdPageObject
   type Extractor = Pdf => Object
 
-  //type PDFBoxObject = PdPage
+
 }
 
 /**

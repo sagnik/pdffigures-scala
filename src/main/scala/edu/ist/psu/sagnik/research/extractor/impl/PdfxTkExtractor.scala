@@ -2,77 +2,76 @@ package edu.ist.psu.sagnik.research.extractor.impl
 
 import at.ac.tuwien.dbai.pdfwrap.model.document._
 import edu.ist.psu.sagnik.research.extractor.PdfModule
-import edu.ist.psu.sagnik.research.extractor.model.Rectangle._
 import edu.ist.psu.sagnik.research.extractor.model._
 
 case object PdfxTkExtractor extends PdfModule[Page]#Extractor {
 
   import scala.collection.JavaConversions._
 
-  override def apply(pdfxtkPageElements: Page) =
+  def apply(pdfxtkPageElements: Page) =
     pdfxtkPageElements.getItems
       .foldLeft(PdPageObject.empty) {
 
-      case (pageObject@PdPageObject(bbs, lines, rects, rasters, chars, words, textLines, paragraphs), item) =>
+        case (pageObject@PdPageObject(bbs, lines, rects, rasters, chars, words, textLines, paragraphs), item) =>
 
-        val r=pdfxtkPageElements.getBoundingBox //this gives the bounding box in the order x1,x2,y1,y2, while we
-        //need them in the order x1,y1,x2,y2. Hence, r(0),r(2),r(1),r(3) and not r(0),r(1),r(2),r(3)
+          val r=pdfxtkPageElements.getBoundingBox //this gives the bounding box in the order x1,x2,y1,y2, while we
+          //need them in the order x1,y1,x2,y2. Hence, r(0),r(2),r(1),r(3) and not r(0),r(1),r(2),r(3)
 
-        val pNum = pdfxtkPageElements.getPageNo
-        item.tagName() match {
+          val pNum = pdfxtkPageElements.getPageNo
+          item.tagName() match {
 
-          case "line-segment" =>
-            val ls = item.asInstanceOf[LineSegment]
-            val additionalLine =
-              PdfLine(
-                boundingBox = Rectangle.fromLineSegment(ls),
-                pageNumber = pNum
+            case "line-segment" =>
+              val ls = item.asInstanceOf[LineSegment]
+              val additionalLine =
+                PdfLine(
+                  boundingBox = Rectangle.fromLineSegment(ls),
+                  pageNumber = pNum
+                )
+              pageObject.copy(
+                pdLines = lines :+ additionalLine,
+                pageBBs = bbs :+ Rectangle(r(0),r(2),r(1),r(3))
               )
-            pageObject.copy(
-              pdLines = lines :+ additionalLine,
-              pageBBs = bbs :+ Rectangle(r(0),r(2),r(1),r(3))
-            )
 
-          case "rect-segment" =>
-            val rs = item.asInstanceOf[RectSegment]
-            val additionalRect =
-              PdfRect(
-                boundingBox = Rectangle.fromRectSegment(rs),
-                pageNumber = pNum
+            case "rect-segment" =>
+              val rs = item.asInstanceOf[RectSegment]
+              val additionalRect =
+                PdfRect(
+                  boundingBox = Rectangle.fromRectSegment(rs),
+                  pageNumber = pNum
+                )
+              pageObject.copy(
+                pdRects = rects :+ additionalRect,
+                pageBBs = bbs :+ Rectangle(r(0),r(2),r(1),r(3))
               )
-            pageObject.copy(
-              pdRects = rects :+ additionalRect,
-              pageBBs = bbs :+ Rectangle(r(0),r(2),r(1),r(3))
-            )
 
-          case "image-segment" =>
-            val is = item.asInstanceOf[ImageSegment]
-            val additionalRaster =
-              PdfRaster(
-                boundingBox = Rectangle.fromImageSegment(is),
-                pageNumber = pNum
+            case "image-segment" =>
+              val is = item.asInstanceOf[ImageSegment]
+              val additionalRaster =
+                PdfRaster(
+                  boundingBox = Rectangle.fromImageSegment(is),
+                  pageNumber = pNum
+                )
+              pageObject.copy(
+                pdImages = rasters :+ additionalRaster,
+                pageBBs = bbs :+ Rectangle(r(0),r(2),r(1),r(3))
               )
-            pageObject.copy(
-              pdImages = rasters :+ additionalRaster,
-              pageBBs = bbs :+ Rectangle(r(0),r(2),r(1),r(3))
-            )
-          case "text-block" =>
-            val tb = item.asInstanceOf[TextBlock]
-            val additionalParagraph =
+            case "text-block" =>
+              val tb = item.asInstanceOf[TextBlock]
+              val additionalParagraph =
                 PdfParagraph(
                   boundingBox = Rectangle.fromTextBlock(tb),
                   pageNumber = pNum,
-                  content = tb.getText
+                  content = tb.getText//changeRectContent(boundingBox,pdfloc,Rectangle(r(0),r(2),r(1),r(3)))
                 )
 
               val additionalTextLines =
                 tb.getItems
                   .map(tl =>
-                  PdfTextLine(
-                    boundingBox = Rectangle.fromTextLine(tl),
-                    pageNumber = pNum,
-                    content = tl.getText
-                  ))
+                    PdfTextLine(
+                      boundingBox = Rectangle.fromTextLine(tl),
+                      pageNumber = pNum,
+                      content = tl.getText
+                    ))
 
               val additionalChars: Seq[PdfChar] =
                 for {
@@ -98,11 +97,11 @@ case object PdfxTkExtractor extends PdfModule[Page]#Extractor {
                 pageBBs = bbs :+ Rectangle(r(0), r(2), r(1), r(3))
               )
 
-          case _ =>
-            //System.err.println(s"[WARN] Skipping unrecognized item tagName: ${item.tagName()}")
-            pageObject
-        }
-    }
+            case _ =>
+              //System.err.println(s"[WARN] Skipping unrecognized item tagName: ${item.tagName()}")
+              pageObject
+          }
+      }
 
 
   def formWords(tb: TextBlock, pageNumber: Int): Seq[PdfWord] =
@@ -126,19 +125,46 @@ case object PdfxTkExtractor extends PdfModule[Page]#Extractor {
 
     indicesNonSpace.sliding(2)
       .map { indexPair =>
-      charSeqToWord(lineChars.slice(indexPair.head, indexPair(1)), pageNumber)
-    }
+        charSeqToWord(lineChars.slice(indexPair.head, indexPair(1)), pageNumber)
+      }
+      .flatten
+      .toSeq
+  }
+
+
+  //def lineSequenceToWord(pText)
+  def textLineContentToWord(pText: String, pChars:Seq[PdfChar], pageNumber: Int): Seq[PdfWord] = {
+    val indicesNonSpace =
+      0 +: pText.zipWithIndex.filter(a=>a._1 == ' ' || a._1 == '\n').map(_._2) :+ pText.length
+
+    //println(pText+"[**]"+indicesNonSpace)
+
+    indicesNonSpace.sliding(2)
+      .map { indexPair =>
+        pdCharSeqToWord(pChars.slice(indexPair.head, indexPair(1)), pageNumber)
+      }
+      .flatten
+      .toSeq
+  }
+
+  def paragraphContentToWord(pText: String, pChars:Seq[PdfChar], pageNumber: Int): Seq[PdfWord] = {
+    val indicesNonSpace =
+      0 +: pText.zipWithIndex.filter(a=>a._1 == ' ' || a._1 == '\n').map(_._2) :+ pText.length
+
+    println(pText+" "+indicesNonSpace)
+
+    indicesNonSpace.sliding(2)
+      .map { indexPair =>
+        pdCharSeqToWord(pChars.slice(indexPair.head, indexPair(1)), pageNumber)
+      }
       .flatten
       .toSeq
   }
 
   def charSeqToWord(chars: Seq[CharSegment], pageNumber: Int): Option[PdfWord] = {
-
     val content = chars.map(_.getText).mkString("")
-
-    if (content.trim().length == 0)
+    if (content.trim.length == 0)
       None
-
     else
       Some(
         PdfWord(
@@ -150,7 +176,27 @@ case object PdfxTkExtractor extends PdfModule[Page]#Extractor {
               chars.map(_.getY2).max
             ),
           pageNumber = pageNumber,
-          content = content
+          content = content.trim
+        )
+      )
+  }
+
+  def pdCharSeqToWord(chars: Seq[PdfChar], pageNumber: Int): Option[PdfWord] = {
+    val content = chars.map(_.content).mkString("")
+    if (content.trim.length == 0)
+      None
+    else
+      Some(
+        PdfWord(
+          boundingBox =
+            Rectangle(
+              chars.map(_.boundingBox.x1).min,
+              chars.map(_.boundingBox.y1).min,
+              chars.map(_.boundingBox.x2).max,
+              chars.map(_.boundingBox.y2).max
+            ),
+          pageNumber = pageNumber,
+          content = content.trim
         )
       )
   }
