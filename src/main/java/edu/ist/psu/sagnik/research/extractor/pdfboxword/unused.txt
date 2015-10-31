@@ -1,0 +1,9 @@
+protected boolean matchCharLine(TextPosition text) {
+        Double yVal = roundVal(Float.valueOf(text.getYDirAdj()));
+        if (yVal.doubleValue() == lastYVal) {
+            return true;
+        }
+        lastYVal = yVal.doubleValue();
+        endWord();
+        return false;
+    }
