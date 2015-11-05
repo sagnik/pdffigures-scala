@@ -124,7 +124,7 @@ object FigureTableExtractionSVG {
         a=>{
           val pageNo=a.substring(0,a.length-4).split("-").last.replace("page","").toInt //TODO: possible exception, should be handled
           if (figPages.exists(pn=>pn==pageNo)) {
-            io.Source.fromFile(a).mkString.split("\n").drop(5).dropRight(1).map(x => x.trim)//.filter(x => x.startsWith("<path") || x.startsWith("<text") || x.startsWith("<image")).toIndexedSeq
+            xmlStringSplit(io.Source.fromFile(a).mkString).map(x => x.trim)//.filter(x => x.startsWith("<path") || x.startsWith("<text") || x.startsWith("<image")).toIndexedSeq
               .map(
                 x => Some(VectorGraphicsPathString(x,
                   getPathBoundingBox(x),
@@ -188,6 +188,11 @@ object FigureTableExtractionSVG {
 
     HTMLWriter(pdfloc.substring(0,pdfloc.length-4),pdfloc.substring(0,pdfloc.length-4)+"/"+pdfloc.split("/").last.substring(0,pdfloc.split("/").last.length-4)+"-"+"FigureTables.html")
 
+  }
+
+  def xmlStringSplit(s:String)={
+    val xmlContent=xml.XML.loadString(s)
+    (xmlContent \\ "path").map(a=>a.toString)++(xmlContent \\ "text").map(a=>a.toString)++(xmlContent \\ "image").map(a=>a.toString)
   }
 
   /*This is a bit of hack. We want bounding boxes for characters, raster graphics as well as graphics paths. The algorithm to extract these
