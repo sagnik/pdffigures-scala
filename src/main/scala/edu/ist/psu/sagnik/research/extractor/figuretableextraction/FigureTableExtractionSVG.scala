@@ -217,11 +217,11 @@ object FigureTableExtractionSVG {
       case x:org.xml.sax.SAXParseException => {println(s"SVG string parsing error: ${c.substring(0,5)}");badRectangle}
     }
 
-
+  //TODO: Only L and M is actually being processed correctly here. Others are not. also, not lower case LMZ. Modify ASAP.
   def pathBB(dString:Option[Seq[Node]]):Rectangle=
     dString match{
       case Some(dString)=> {
-        val points=dString.text.toLowerCase.split("[lmcz]").map(a=>a.trim).filter(a=>a.length>0)
+        val points=dString.text.split("[LMCZ]").map(a=>a.trim).filter(a=>a.length>0)
           .map(a=>a.split("\\s+")).map(a=>point(a(0).toFloat,a(1).toFloat)) //TODO: possible exception
         Rectangle(
           points.map(a=>a.x).min+2f,
